@@ -46,6 +46,8 @@ bool clickhold = false;
 bool inmenu = true;
 unsigned volume = 100;
 
+char guess[7];
+
 void getscrxy(float x, float y, float* xout, float* yout) {
 	*xout = tilewidth/2 * (x-y);
 	*yout = tileheight/2 * (x+y);
@@ -620,6 +622,168 @@ int main(int argc, char* argv[]) {
 					char buffer[7];
 					snprintf(buffer, sizeof(buffer), "%d", pass);
 					write(width/2 - 128, height/2 - 16, 7, buffer, fontID, 320.0f);
+
+				} else if (furniture == 14) {
+					drawGUI(width/2 - (0.3536*(height-256)), 128, 0.707*(height-256), height-256, uiID, 64.0f);
+					
+					float spacex1 = width/2 - (0.3536*(height-256)) + 32;
+					float spacex4 = 0.707 * (height-256) - 32;
+					float w = spacex1 - spacex4;
+					float spacex2 = spacex1 + w;
+					float spacex3 = spacex2 + w;
+					float spacey4 = height - 128;
+					float spacey3 = spacey4 - w;
+					float spacey2 = spacey3 - w;
+					float spacey1 = spacey2 - w;
+					float spacey0 = spacey1 - w;
+
+					drawGUI(spacex1, spacey0, w, w, uiID2, 64.0f);
+					drawGUI(spacex2, spacey0, w, w, uiID2, 64.0f);
+					drawGUI(spacex3, spacey0, w, w, uiID2, 64.0f);
+
+					drawGUI(spacex1, spacey1, w, w, uiID2, 64.0f);
+					drawGUI(spacex2, spacey1, w, w, uiID2, 64.0f);
+					drawGUI(spacex3, spacey1, w, w, uiID2, 64.0f);
+
+					drawGUI(spacex1, spacey2, w, w, uiID2, 64.0f);
+					drawGUI(spacex2, spacey2, w, w, uiID2, 64.0f);
+					drawGUI(spacex3, spacey2, w, w, uiID2, 64.0f);
+
+					drawGUI(spacex1, spacey3, w, w, uiID2, 64.0f);
+					drawGUI(spacex2, spacey3, 2*w, w, uiID2, 64.0f);
+
+					int xtra = w/2 - 16;
+
+					write(spacex1+xtra, spacey0+xtra, 2, "7", fontID, 320.0f);
+					write(spacex2+xtra, spacey0+xtra, 2, "8", fontID, 320.0f);
+					write(spacex3+xtra, spacey0+xtra, 2, "9", fontID, 320.0f);
+
+					write(spacex1+xtra, spacey1+xtra, 2, "4", fontID, 320.0f);
+					write(spacex2+xtra, spacey1+xtra, 2, "5", fontID, 320.0f);
+					write(spacex3+xtra, spacey1+xtra, 2, "6", fontID, 320.0f);
+
+					write(spacex1+xtra, spacey2+xtra, 2, "1", fontID, 320.0f);
+					write(spacex2+xtra, spacey2+xtra, 2, "2", fontID, 320.0f);
+					write(spacex3+xtra, spacey2+xtra, 2, "3", fontID, 320.0f);
+
+					write(spacex1+xtra, spacey3+xtra, 2, "0", fontID, 320.0f);
+					write(spacex2+xtra, spacey3+(w-80), 6, "ENTER", fontID, 320.0f);
+
+					write(spacex1, spacey4 - 64, 7, guess, fontID, 320.0f);
+
+					if (holding) {
+						if (curx >= spacex1 && curx < spacex2 && cury >= spacey0 && cury < spacey1) {
+							guess[0] = guess[1];
+							guess[1] = guess[2];
+							guess[2] = guess[3];
+							guess[3] = guess[4];
+							guess[4] = guess[5];
+							guess[5] = guess[6];
+							guess[6] = '7';
+						}
+
+						else if (curx >= spacex2 && curx < spacex3 && cury >= spacey0 && cury < spacey1) {
+							guess[0] = guess[1];
+							guess[1] = guess[2];
+							guess[2] = guess[3];
+							guess[3] = guess[4];
+							guess[4] = guess[5];
+							guess[5] = guess[6];
+							guess[6] = '8';
+						}
+
+						else if (curx >= spacex3 && curx < spacex4 && cury >= spacey0 && cury < spacey1) {
+							guess[0] = guess[1];
+							guess[1] = guess[2];
+							guess[2] = guess[3];
+							guess[3] = guess[4];
+							guess[4] = guess[5];
+							guess[5] = guess[6];
+							guess[6] = '9';
+						}
+
+						else if (curx >= spacex1 && curx < spacex2 && cury >= spacey1 && cury < spacey2) {
+							guess[0] = guess[1];
+							guess[1] = guess[2];
+							guess[2] = guess[3];
+							guess[3] = guess[4];
+							guess[4] = guess[5];
+							guess[5] = guess[6];
+							guess[6] = '4';
+						}
+
+						else if (curx >= spacex2 && curx < spacex3 && cury >= spacey1 && cury < spacey2) {
+							guess[0] = guess[1];
+							guess[1] = guess[2];
+							guess[2] = guess[3];
+							guess[3] = guess[4];
+							guess[4] = guess[5];
+							guess[5] = guess[6];
+							guess[6] = '5';
+						}
+
+						else if (curx >= spacex3 && curx < spacex4 && cury >= spacey1 && cury < spacey2) {
+							guess[0] = guess[1];
+							guess[1] = guess[2];
+							guess[2] = guess[3];
+							guess[3] = guess[4];
+							guess[4] = guess[5];
+							guess[5] = guess[6];
+							guess[6] = '6';
+						}
+
+						else if (curx >= spacex1 && curx < spacex2 && cury >= spacey2 && cury < spacey3) {
+							guess[0] = guess[1];
+							guess[1] = guess[2];
+							guess[2] = guess[3];
+							guess[3] = guess[4];
+							guess[4] = guess[5];
+							guess[5] = guess[6];
+							guess[6] = '1';
+						}
+
+						else if (curx >= spacex2 && curx < spacex3 && cury >= spacey2 && cury < spacey3) {
+							guess[0] = guess[1];
+							guess[1] = guess[2];
+							guess[2] = guess[3];
+							guess[3] = guess[4];
+							guess[4] = guess[5];
+							guess[5] = guess[6];
+							guess[6] = '2';
+						}
+
+						else if (curx >= spacex3 && curx < spacex4 && cury >= spacey2 && cury < spacey3) {
+							guess[0] = guess[1];
+							guess[1] = guess[2];
+							guess[2] = guess[3];
+							guess[3] = guess[4];
+							guess[4] = guess[5];
+							guess[5] = guess[6];
+							guess[6] = '3';
+						}
+
+						else if (curx >= spacex1 && curx < spacex2 && cury >= spacey3 && cury < spacey4) {
+							guess[0] = guess[1];
+							guess[1] = guess[2];
+							guess[2] = guess[3];
+							guess[3] = guess[4];
+							guess[4] = guess[5];
+							guess[5] = guess[6];
+							guess[6] = '0';
+						}
+
+						else if (curx >= spacex2 && curx < spacex4 && cury >= spacey3 && cury < spacey4) {
+							if (std::stoi(guess) == pass) {
+								if (finished <= 4) finished += 1;
+								saveprog();
+
+								px = 3.0f;
+								py = 3.0f;
+								inmenu = true;
+								paused = false;
+							}
+						}
+					}
 				}
 			}
 		}
