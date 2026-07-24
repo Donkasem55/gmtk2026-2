@@ -32,12 +32,12 @@ int tmpx, tmpy;
 
 const float tfps = 120.0f;
 const float tfd = 1.0f / tfps;
-const char* lf = "levels/test/floor.txt";
-const char* lw = "levels/test/wall.txt";
-const char* ls = "levels/test/special.txt";
 
 bool paused = false;
 bool ispaused = false;
+
+bool ingui = false;
+bool isingui = false;
 
 void getscrxy(float x, float y, float* xout, float* yout) {
 	*xout = tilewidth/2 * (x-y);
@@ -141,17 +141,17 @@ void drawImg(int x, int y, int w, int h, unsigned int textureID, int tileID, flo
 	glDisable(GL_TEXTURE_2D);
 }
 
-void overlay(float w, float h, bool paused) {
-	if (paused) {
-		glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
-		glBegin(GL_QUADS);
-		glVertex2f(0.0f, 0.0f);
-		glVertex2f(w, 0.0f);
-		glVertex2f(w, h);
-		glVertex2f(0.0f, h);
-		glEnd();
-		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	}
+void overlay(float w, float h) {
+	glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
+
+	glBegin(GL_QUADS);
+	glVertex2f(0.0f, 0.0f);
+	glVertex2f(w, 0.0f);
+	glVertex2f(w, h);
+	glVertex2f(0.0f, h);
+	glEnd();
+	
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
 void drawGUI(int x1, int y1, int w, int h, unsigned int textureID, float ssh) {
@@ -173,6 +173,21 @@ void drawGUI(int x1, int y1, int w, int h, unsigned int textureID, float ssh) {
 	drawImg(x3, y3, 32, 32, textureID, 8, ssh);
 }
 
+void write(int x, int y, int cpl, char* text, unsigned int textureID, float ssh) {
+	int cx = 0;
+	int cy = 0;
+	for (int i=0; text[i] != '\0'; i++) {
+		cx += 1;
+		if (cx == cpl) {
+			cx = 0;
+			cy += 1;
+		}
+		if ((int)text[i] != 32) {
+			drawImg(x+(cx*32), y+(cy*32), 32, 32, textureID, (int)text[i]-44, ssh);
+		}
+	}
+}
+
 // we live in a cruel world
 
 int main(int argc, char* argv[]) {
@@ -190,7 +205,7 @@ int main(int argc, char* argv[]) {
 	glDisable(GL_SCISSOR_TEST);
 	glDisable(GL_CULL_FACE);
 
-	int mvmnt[] = {GLFW_KEY_E, GLFW_KEY_D, GLFW_KEY_S, GLFW_KEY_F, GLFW_KEY_ESCAPE};
+	int mvmnt[] = {GLFW_KEY_W, GLFW_KEY_S, GLFW_KEY_A, GLFW_KEY_D, GLFW_KEY_ESCAPE, GLFW_KEY_E};
 	unsigned int state = 0;
 
 	int level = 0;
@@ -203,10 +218,11 @@ int main(int argc, char* argv[]) {
 	std::vector<std::vector<int>> specialmap = readmap(sms[level]);
 	int pass = randrange(0, 1000000);
 
-
 	unsigned int textID = loadTexture("assets/tiles.png");
 	unsigned int playerID = loadTexture("assets/raine.png");
 	unsigned int uiID = loadTexture("assets/ui.png");
+	unsigned int uiID2 = loadTexture("assets/ui2.png");
+	unsigned int fontID = loadTexture("assets/font.png");
 
 	// Introducing the newest technology: The pain creator! wait no, sorry, the real name was C++.
 	
@@ -222,7 +238,11 @@ int main(int argc, char* argv[]) {
 
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
-		
+
+		double curx;
+		double cury;
+		glfwSetCursorPosCallback(screen, &curx, &cury);
+
 		float dx = 0.0f;
 		float dy = 0.0f;
 
@@ -254,6 +274,15 @@ int main(int argc, char* argv[]) {
 		} else {
 			ispaused = false;
 		}
+		int furniture = specialmap[(int)floor(py)][(int)floor(px)-1];
+		if (glfwGetKey(screen, mvmnt[5]) == GLFW_PRESS) {
+			if (!isingui && (furniture != -1 && furniture != 12)) {
+				ingui = !(ingui);
+				isingui = true;
+			}
+		} else {
+			isingui = false;
+		}
 
 		// WHY WHY WHY
 		
@@ -266,6 +295,9 @@ int main(int argc, char* argv[]) {
 			if (wallmap[(int)floor(newy)+1][px] == -1 || wallmap[(int)floor(newy)+1][px] == 12) { // why the fuck does adding +1 work
 				py = newy;
 			}
+		} else {
+			ingui = false;
+			isingui = false;
 		}
 
 		int tx = (int)floor(px);
@@ -351,9 +383,23 @@ int main(int argc, char* argv[]) {
 		for (int i=0; i<buffer2.size(); i++) {
 			drawImg(buffer2[i].x, buffer2[i].y, buffer2[i].w, buffer2[i].h, buffer2[i].text, buffer2[i].tile, buffer2[i].ssh);
 		}
-
+		
 		if (paused) {
-			overlay((float)width, (float)height, paused);
+			overlay((float)width, (float)height);
+			int btn1y = (height/2)-160;
+			int btn2y = (height/2)-48;
+			int btn3y = (height/2)+64;
+			drawGUI(128, btn1y, width-256, 96, uiID, 64.0f);
+			drawGUI(128, btn2y, width-256, 96, uiID, 64.0f);
+			drawGUI(128, btn3y, width-256, 96, uiID, 64.0f);
+			write((width/2)-224, btn1y+28, 13, "Back to Game", fontID, 320.0f);
+		}
+
+		if (ingui) {
+			overlay((float)width, (float)height);
+			if (furniture == 11) {
+				drawGUI(128, 128, width-256, height-256, uiID2, 64.0f);
+			}
 		}
 
 		glfwSwapBuffers(screen);
