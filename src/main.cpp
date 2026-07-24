@@ -74,7 +74,26 @@ std::vector<std::vector<int>> readmap(const char* filename) {
 		}
 		output.push_back(tmp);
 	}
+	readfile.close();
 	return output;
+}
+
+int finished = 0;
+void loadprog() {
+	std::ifstream readfile("savedata.txt");
+	std::string tmp;
+	readfile >> tmp;
+	finished = std::stoi(tmp);
+	readfile.close();
+	return;
+}
+
+void saveprog() {
+	std::ofstream writefile("savedata.txt");
+	char tmp[2];
+	snprintf(tmp, 2, "%d", finished);
+	writefile << tmp;
+	return;
 }
 
 int randrange(int min, int max) {
@@ -221,6 +240,19 @@ void write(int x, int y, int cpl, char* text, unsigned int textureID, float ssh)
 
 // we live in a cruel world
 
+void rect(float x, float y, float w, float h) {
+	glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
+
+	glBegin(GL_QUADS);
+	glVertex2f(x, y);
+	glVertex2f(x+w, y);
+	glVertex2f(x+w, y+h);
+	glVertex2f(x, y+h);
+	glEnd();
+	
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+}
+
 int main(int argc, char* argv[]) {
 	glfwInit();
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
@@ -255,6 +287,8 @@ int main(int argc, char* argv[]) {
 	unsigned int uiID2 = loadTexture("assets/ui2.png");
 	unsigned int fontID = loadTexture("assets/font.png");
 	unsigned int bgID = loadTexture("assets/bg.png");
+
+	loadprog();
 
 	// Introducing the newest technology: The pain creator! wait no, sorry, the real name was C++.
 	
@@ -335,7 +369,6 @@ int main(int argc, char* argv[]) {
 		} else {
 			isingui = false;
 		}
-
 		
 		// WHY WHY WHY
 		
@@ -388,20 +421,44 @@ int main(int argc, char* argv[]) {
 			int btn3y = (height/2)-48;
 			int btn4y = (height/2)+64;
 			int btn5y = (height/2)+176;
-
-			drawGUI(128, btn1y, width-256, 96, uiID2, 64.0f);
-			drawGUI(128, btn2y, width-256, 96, uiID2, 64.0f);
-			drawGUI(128, btn3y, width-256, 96, uiID2, 64.0f);
-			drawGUI(128, btn4y, width-256, 96, uiID2, 64.0f);
-			drawGUI(128, btn5y, width-256, 96, uiID2, 64.0f);
 			
+			if (finished >= 0) {
+				drawGUI(128, btn1y, width-256, 96, uiID, 64.0f);
+			} else {
+				drawGUI(128, btn1y, width-256, 96, uiID2, 64.0f);
+			}
 			write((width/2)-176, btn1y+28, 10, "Chapter 1", fontID, 320.0f);
+			
+			if (finished >= 1) {
+				drawGUI(128, btn2y, width-256, 96, uiID, 64.0f);
+			} else {
+				drawGUI(128, btn2y, width-256, 96, uiID2, 64.0f);
+			}
 			write((width/2)-176, btn2y+28, 10, "Chapter 2", fontID, 320.0f);
+			
+			if (finished >= 2) {
+				drawGUI(128, btn3y, width-256, 96, uiID, 64.0f);
+			} else {
+				drawGUI(128, btn3y, width-256, 96, uiID2, 64.0f);
+			}
 			write((width/2)-176, btn3y+28, 10, "Chapter 3", fontID, 320.0f);
+			
+			if (finished >= 3) {
+				drawGUI(128, btn4y, width-256, 96, uiID, 64.0f);
+			} else {
+				drawGUI(128, btn4y, width-256, 96, uiID2, 64.0f);
+			}
 			write((width/2)-176, btn4y+28, 10, "Chapter 4", fontID, 320.0f);
+			
+			if (finished >= 4) {
+				drawGUI(128, btn5y, width-256, 96, uiID, 64.0f);
+			} else {
+				drawGUI(128, btn5y, width-256, 96, uiID2, 64.0f);
+			}
 			write((width/2)-176, btn5y+28, 10, "Chapter 5", fontID, 320.0f);
+
 			if (holding) {
-				if (curx >= 128 && curx <= width - 128  && cury >= btn1y && cury <= btn1y+96) {
+				if (curx >= 128 && curx <= width - 128  && cury >= btn1y && cury <= btn1y+96 && finished >= 0) {
 					level = 0;
 					inmenu = false;
 			
@@ -410,7 +467,7 @@ int main(int argc, char* argv[]) {
 					specialmap = readmap(sms[level]);
 					pass = randrange(0, 1000000);
 				}
-				if (curx >= 128 && curx <= width - 128  && cury >= btn2y && cury <= btn2y+96) {
+				if (curx >= 128 && curx <= width - 128  && cury >= btn2y && cury <= btn2y+96 && finished >= 1) {
 					level = 1;
 					inmenu = false;
 			
@@ -419,7 +476,7 @@ int main(int argc, char* argv[]) {
 					specialmap = readmap(sms[level]);
 					pass = randrange(0, 1000000);
 				}
-				if (curx >= 128 && curx <= width - 128  && cury >= btn3y && cury <= btn3y+96) {
+				if (curx >= 128 && curx <= width - 128  && cury >= btn3y && cury <= btn3y+96 && finished >= 2) {
 					level = 2;
 					inmenu = false;
 			
@@ -428,7 +485,7 @@ int main(int argc, char* argv[]) {
 					specialmap = readmap(sms[level]);
 					pass = randrange(0, 1000000);
 				}
-				if (curx >= 128 && curx <= width - 128  && cury >= btn4y && cury <= btn4y+96) {
+				if (curx >= 128 && curx <= width - 128  && cury >= btn4y && cury <= btn4y+96 && finished >= 3) {
 					level = 3;
 					inmenu = false;
 			
@@ -437,7 +494,7 @@ int main(int argc, char* argv[]) {
 					specialmap = readmap(sms[level]);
 					pass = randrange(0, 1000000);
 				}
-				if (curx >= 128 && curx <= width - 128  && cury >= btn5y && cury <= btn5y+96) {
+				if (curx >= 128 && curx <= width - 128  && cury >= btn5y && cury <= btn5y+96 && finished >= 4) {
 					level = 4;
 					inmenu = false;
 			
