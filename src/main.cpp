@@ -4,6 +4,9 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include <AL/al.h>
+#include <AL/alc.h>
+
 #include <map>
 #include <string>
 #include <vector>
@@ -11,12 +14,14 @@
 #include <chrono>
 #include <array>
 #include <sstream>
+#include <iostream>
 #include <fstream>
 #include <random>
 
 #include <stdio.h>
 #include <math.h> // math.h is better than cmath, prove me wrong.
 #include <string.h> // string.h is also better than cstring
+#include <stdlib.h> // MALLOC ON TOP
 
 const int tilewidth = 256;
 const int tileheight = 128;
@@ -46,7 +51,7 @@ bool clickhold = false;
 bool inmenu = true;
 unsigned volume = 100;
 
-char guess[7];
+char guess[7] = "000000";
 
 void getscrxy(float x, float y, float* xout, float* yout) {
 	*xout = tilewidth/2 * (x-y);
@@ -270,6 +275,30 @@ int main(int argc, char* argv[]) {
 	glDisable(GL_SCISSOR_TEST);
 	glDisable(GL_CULL_FACE);
 
+	ALCdevice* device = alcOpenDevice(NULL);
+	ALCcontext* context;
+	if (!device) {} else {
+		context = alcCreateContext(device, NULL);
+		alcMakeContextCurrent(context);
+	}
+	std::ifstream file("assets/Namelessness.wav", std::ios::binary | std::ios::ate);
+	std::streamsize asize = file.tellg();
+	char* abuf = (char*)malloc(asize * sizeof(char));
+	file.seekg(0, std::ios::beg);
+	file.read(abuf, asize);
+
+	ALuint abufID;
+	ALuint asrcID;
+	if (!device) {} else {
+		alGenBuffers(1, &abufID);
+		alBufferData(abufID, AL_FORMAT_STEREO16, abuf, asize * sizeof(char), 44100);
+
+		alGenSources(1, &asrcID);
+		alSourcei(asrcID, AL_BUFFER, abufID);
+		alSourcei(asrcID, AL_LOOPING, AL_TRUE);
+		alSourcePlay(asrcID);
+	}
+
 	int mvmnt[] = {GLFW_KEY_W, GLFW_KEY_S, GLFW_KEY_A, GLFW_KEY_D, GLFW_KEY_ESCAPE, GLFW_KEY_E};
 	unsigned int state = 0;
 
@@ -386,6 +415,10 @@ int main(int argc, char* argv[]) {
 		} else if (paused) {
 			ingui = false;
 			isingui = false;
+		}
+
+		if (!device) {} else {
+			alSourcef(asrcID, AL_GAIN, volume/100.0f);
 		}
 
 		int tx = (int)floor(px);
@@ -627,49 +660,54 @@ int main(int argc, char* argv[]) {
 					drawGUI(width/2 - (0.3536*(height-256)), 128, 0.707*(height-256), height-256, uiID, 64.0f);
 					
 					float spacex1 = width/2 - (0.3536*(height-256)) + 32;
-					float spacex4 = 0.707 * (height-256) - 32;
-					float w = spacex1 - spacex4;
+					float spacex4 = 0.707 * (height-256) + spacex1 - 64;
+					float w = (spacex4 - spacex1)/3;
+					float h = w*3/4;
+
 					float spacex2 = spacex1 + w;
 					float spacex3 = spacex2 + w;
-					float spacey4 = height - 128;
-					float spacey3 = spacey4 - w;
-					float spacey2 = spacey3 - w;
-					float spacey1 = spacey2 - w;
-					float spacey0 = spacey1 - w;
+					float spacey4 = height - 160;
+					float spacey3 = spacey4 - h;
+					float spacey2 = spacey3 - h;
+					float spacey1 = spacey2 - h;
+					float spacey0 = spacey1 - h;
 
-					drawGUI(spacex1, spacey0, w, w, uiID2, 64.0f);
-					drawGUI(spacex2, spacey0, w, w, uiID2, 64.0f);
-					drawGUI(spacex3, spacey0, w, w, uiID2, 64.0f);
+					drawGUI(spacex1, spacey0, w, h, uiID2, 64.0f);
+					drawGUI(spacex2, spacey0, w, h, uiID2, 64.0f);
+					drawGUI(spacex3, spacey0, w, h, uiID2, 64.0f);
 
-					drawGUI(spacex1, spacey1, w, w, uiID2, 64.0f);
-					drawGUI(spacex2, spacey1, w, w, uiID2, 64.0f);
-					drawGUI(spacex3, spacey1, w, w, uiID2, 64.0f);
+					drawGUI(spacex1, spacey1, w, h, uiID2, 64.0f);
+					drawGUI(spacex2, spacey1, w, h, uiID2, 64.0f);
+					drawGUI(spacex3, spacey1, w, h, uiID2, 64.0f);
 
-					drawGUI(spacex1, spacey2, w, w, uiID2, 64.0f);
-					drawGUI(spacex2, spacey2, w, w, uiID2, 64.0f);
-					drawGUI(spacex3, spacey2, w, w, uiID2, 64.0f);
+					drawGUI(spacex1, spacey2, w, h, uiID2, 64.0f);
+					drawGUI(spacex2, spacey2, w, h, uiID2, 64.0f);
+					drawGUI(spacex3, spacey2, w, h, uiID2, 64.0f);
 
-					drawGUI(spacex1, spacey3, w, w, uiID2, 64.0f);
-					drawGUI(spacex2, spacey3, 2*w, w, uiID2, 64.0f);
+					drawGUI(spacex1, spacey3, w, h, uiID2, 64.0f);
+					drawGUI(spacex2, spacey3, 2*w, h, uiID2, 64.0f);
 
-					int xtra = w/2 - 16;
+					drawGUI(spacex1, spacey0-h, 3*w, h, uiID2, 64.0f);
 
-					write(spacex1+xtra, spacey0+xtra, 2, "7", fontID, 320.0f);
-					write(spacex2+xtra, spacey0+xtra, 2, "8", fontID, 320.0f);
-					write(spacex3+xtra, spacey0+xtra, 2, "9", fontID, 320.0f);
+					int xtra = w/2-48;
+					int xtra2 = h/2-24;
 
-					write(spacex1+xtra, spacey1+xtra, 2, "4", fontID, 320.0f);
-					write(spacex2+xtra, spacey1+xtra, 2, "5", fontID, 320.0f);
-					write(spacex3+xtra, spacey1+xtra, 2, "6", fontID, 320.0f);
+					write(spacex1+xtra, spacey0+xtra2, 2, "7", fontID, 320.0f);
+					write(spacex2+xtra, spacey0+xtra2, 2, "8", fontID, 320.0f);
+					write(spacex3+xtra, spacey0+xtra2, 2, "9", fontID, 320.0f);
 
-					write(spacex1+xtra, spacey2+xtra, 2, "1", fontID, 320.0f);
-					write(spacex2+xtra, spacey2+xtra, 2, "2", fontID, 320.0f);
-					write(spacex3+xtra, spacey2+xtra, 2, "3", fontID, 320.0f);
+					write(spacex1+xtra, spacey1+xtra2, 2, "4", fontID, 320.0f);
+					write(spacex2+xtra, spacey1+xtra2, 2, "5", fontID, 320.0f);
+					write(spacex3+xtra, spacey1+xtra2, 2, "6", fontID, 320.0f);
 
-					write(spacex1+xtra, spacey3+xtra, 2, "0", fontID, 320.0f);
-					write(spacex2+xtra, spacey3+(w-80), 6, "ENTER", fontID, 320.0f);
+					write(spacex1+xtra, spacey2+xtra2, 2, "1", fontID, 320.0f);
+					write(spacex2+xtra, spacey2+xtra2, 2, "2", fontID, 320.0f);
+					write(spacex3+xtra, spacey2+xtra2, 2, "3", fontID, 320.0f);
 
-					write(spacex1, spacey4 - 64, 7, guess, fontID, 320.0f);
+					write(spacex1+xtra, spacey3+xtra2, 2, "0", fontID, 320.0f);
+					write(spacex2+w-108, spacey3+xtra2, 6, "ENTER", fontID, 320.0f);
+
+					write(spacex1+xtra, spacey0 - 64, 7, guess, fontID, 320.0f);
 
 					if (holding) {
 						if (curx >= spacex1 && curx < spacex2 && cury >= spacey0 && cury < spacey1) {
@@ -678,8 +716,7 @@ int main(int argc, char* argv[]) {
 							guess[2] = guess[3];
 							guess[3] = guess[4];
 							guess[4] = guess[5];
-							guess[5] = guess[6];
-							guess[6] = '7';
+							guess[5] = '7';
 						}
 
 						else if (curx >= spacex2 && curx < spacex3 && cury >= spacey0 && cury < spacey1) {
@@ -688,8 +725,7 @@ int main(int argc, char* argv[]) {
 							guess[2] = guess[3];
 							guess[3] = guess[4];
 							guess[4] = guess[5];
-							guess[5] = guess[6];
-							guess[6] = '8';
+							guess[5] = '8';
 						}
 
 						else if (curx >= spacex3 && curx < spacex4 && cury >= spacey0 && cury < spacey1) {
@@ -698,8 +734,7 @@ int main(int argc, char* argv[]) {
 							guess[2] = guess[3];
 							guess[3] = guess[4];
 							guess[4] = guess[5];
-							guess[5] = guess[6];
-							guess[6] = '9';
+							guess[5] = '9';
 						}
 
 						else if (curx >= spacex1 && curx < spacex2 && cury >= spacey1 && cury < spacey2) {
@@ -708,8 +743,7 @@ int main(int argc, char* argv[]) {
 							guess[2] = guess[3];
 							guess[3] = guess[4];
 							guess[4] = guess[5];
-							guess[5] = guess[6];
-							guess[6] = '4';
+							guess[5] = '4';
 						}
 
 						else if (curx >= spacex2 && curx < spacex3 && cury >= spacey1 && cury < spacey2) {
@@ -718,8 +752,7 @@ int main(int argc, char* argv[]) {
 							guess[2] = guess[3];
 							guess[3] = guess[4];
 							guess[4] = guess[5];
-							guess[5] = guess[6];
-							guess[6] = '5';
+							guess[5] = '5';
 						}
 
 						else if (curx >= spacex3 && curx < spacex4 && cury >= spacey1 && cury < spacey2) {
@@ -728,8 +761,7 @@ int main(int argc, char* argv[]) {
 							guess[2] = guess[3];
 							guess[3] = guess[4];
 							guess[4] = guess[5];
-							guess[5] = guess[6];
-							guess[6] = '6';
+							guess[5] = '6';
 						}
 
 						else if (curx >= spacex1 && curx < spacex2 && cury >= spacey2 && cury < spacey3) {
@@ -738,8 +770,7 @@ int main(int argc, char* argv[]) {
 							guess[2] = guess[3];
 							guess[3] = guess[4];
 							guess[4] = guess[5];
-							guess[5] = guess[6];
-							guess[6] = '1';
+							guess[5] = '1';
 						}
 
 						else if (curx >= spacex2 && curx < spacex3 && cury >= spacey2 && cury < spacey3) {
@@ -748,8 +779,7 @@ int main(int argc, char* argv[]) {
 							guess[2] = guess[3];
 							guess[3] = guess[4];
 							guess[4] = guess[5];
-							guess[5] = guess[6];
-							guess[6] = '2';
+							guess[5] = '2';
 						}
 
 						else if (curx >= spacex3 && curx < spacex4 && cury >= spacey2 && cury < spacey3) {
@@ -758,8 +788,7 @@ int main(int argc, char* argv[]) {
 							guess[2] = guess[3];
 							guess[3] = guess[4];
 							guess[4] = guess[5];
-							guess[5] = guess[6];
-							guess[6] = '3';
+							guess[5] = '3';
 						}
 
 						else if (curx >= spacex1 && curx < spacex2 && cury >= spacey3 && cury < spacey4) {
@@ -768,8 +797,7 @@ int main(int argc, char* argv[]) {
 							guess[2] = guess[3];
 							guess[3] = guess[4];
 							guess[4] = guess[5];
-							guess[5] = guess[6];
-							guess[6] = '0';
+							guess[5] = '0';
 						}
 
 						else if (curx >= spacex2 && curx < spacex4 && cury >= spacey3 && cury < spacey4) {
@@ -781,6 +809,9 @@ int main(int argc, char* argv[]) {
 								py = 3.0f;
 								inmenu = true;
 								paused = false;
+								ispaused = false;
+								ingui = false;
+								isingui = false;
 							}
 						}
 					}
@@ -797,5 +828,15 @@ int main(int argc, char* argv[]) {
 		}
 	}
 	glfwTerminate();
+	if (!device) {} else {
+		alSourceStop(asrcID);
+		alDeleteSources(1, &asrcID);
+		alDeleteBuffers(1, &abufID);
+	
+		alcMakeContextCurrent(NULL);
+		alcDestroyContext(context);
+		alcCloseDevice(device);
+	}
+	free(abuf);
 }
 
