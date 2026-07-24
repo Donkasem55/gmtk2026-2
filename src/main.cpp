@@ -12,9 +12,11 @@
 #include <array>
 #include <sstream>
 #include <fstream>
-#include <iostream>
+#include <random>
 
+#include <stdio.h>
 #include <math.h> // math.h is better than cmath, prove me wrong.
+#include <string.h> // string.h is also better than cstring
 
 const int tilewidth = 256;
 const int tileheight = 128;
@@ -66,6 +68,14 @@ std::vector<std::vector<int>> readmap(const char* filename) {
 	return output;
 }
 
+int randrange(int min, int max) {
+	std::random_device rd;
+	std::mt19937 gen(rd());
+	std::uniform_int_distribution<int> distrib(0, max-1);
+	int res = distrib(gen);
+	return res;
+}
+
 typedef struct draw {
 	int x;
 	int y;
@@ -78,33 +88,7 @@ typedef struct draw {
 
 unsigned int loadTexture(const char* texture) {
 	int imgwidth, imgheight, channels;
-	// std::vector<unsigned char> txt(32 * 32 * 4);
 	unsigned char* text = stbi_load(texture, &imgwidth, &imgheight, &channels, 4);
-	/*if (tileid == -1) {
-		//textTMP = stbi_load("empty.png", &imgwidth, &imgheight, &channels, 4);
-		//text = textTMP;
-		tileid = 12; // tile -1 is the legacy id for empty tile
-	}
-	{
-		textTMP = stbi_load(texture, &imgwidth, &imgheight, &channels, 4);
-		if (!textTMP) {
-			std::cout << stbi_failure_reason() << std::endl;
-		}
-		int tx = tileid % 8;
-		int ty = tileid / 8;
-
-		for (int y = 0; y < 32; y++) {
-			memcpy(
-				txt.data() + y * 32 * 4,
-				textTMP + ((ty * 32 + y) * imgwidth + tx * 32) * 4,
-				32 * 4
-			);
-		}
-		text = txt.data();
-		
-		imgwidth = 32;
-		imgheight = 32;
-	}*/
 
 	// Bjarne's mom
 
@@ -118,7 +102,6 @@ unsigned int loadTexture(const char* texture) {
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-	//std::cout << text[0];   for some reason it just freezes if you uncomment this line
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imgwidth, imgheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, text);
 	stbi_image_free(text);
 	return textID;
@@ -181,13 +164,35 @@ void drawGUI(int x1, int y1, int w, int h, unsigned int textureID, float ssh) {
 	drawImg(x3, y3, 32, 32, textureID, 8, ssh);
 }
 
+void reload(
+	std::vector<std::vector<int>>* floormap,
+	std::vector<std::vector<int>>* wallmap,
+	std::vector<std::vector<int>>* specialmap,
+	char* dirname,
+	int* pass
+) {
+	char fm[22];
+	char wm[20];
+	char sm[24];
+	strcpy(fm, dirname);
+	strcpy(wm, dirname);
+	strcpy(sm, dirname);
+	strcat(fm, "floormap.txt");
+	strcat(wm, "wallmap.txt");
+	strcat(sm, "specialmap.txt");
+	*floormap = readmap(fm);
+	*wallmap = readmap(wm);
+	*specialmap = readmap(sm);
+	*pass = randrange(0, 1000000);
+}
+
 // we live in a cruel world
 
 int main(int argc, char* argv[]) {
 	glfwInit();
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
-	GLFWwindow* screen = glfwCreateWindow(800, 600, "Blade of Liberation", NULL, NULL);
+	GLFWwindow* screen = glfwCreateWindow(800, 600, "Almost There", NULL, NULL);
 	glfwMakeContextCurrent(screen);
 	gladLoadGL();
 
@@ -201,10 +206,16 @@ int main(int argc, char* argv[]) {
 	int mvmnt[] = {GLFW_KEY_E, GLFW_KEY_D, GLFW_KEY_S, GLFW_KEY_F, GLFW_KEY_R};
 	unsigned int state = 0;
 
-	std::vector<std::vector<int>> floormap = readmap(lf);
-	std::vector<std::vector<int>> wallmap = readmap(lw);
-	std::vector<std::vector<int>> specialmap = readmap(ls);
-	
+	int level = 0;
+	char dirname[10];
+	snprintf(dirname, sizeof(dirname), "levels/%d/");
+
+	std::vector<std::vector<int>> floormap;
+	std::vector<std::vector<int>> wallmap;
+	std::vector<std::vector<int>> specialmap;
+	int pass;
+
+
 	unsigned int textID = loadTexture("assets/tiles.png");
 	unsigned int playerID = loadTexture("assets/raine.png");
 	unsigned int uiID = loadTexture("assets/ui.png");
