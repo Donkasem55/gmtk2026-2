@@ -39,6 +39,7 @@ bool ispaused = false;
 bool ingui = false;
 bool isingui = false;
 
+bool inmenu = true;
 bool holding = false;
 unsigned volume = 100;
 
@@ -128,7 +129,6 @@ void drawImg(int x, int y, int w, int h, unsigned int textureID, int tileID, flo
 	float v2 = ((32*ty + 32.0f) / ssh);
 
 	// i hate my life
-	// if you read this you're bi
 
 	glBegin(GL_QUADS);
 	glTexCoord2f(u1, v1);
@@ -142,6 +142,25 @@ void drawImg(int x, int y, int w, int h, unsigned int textureID, int tileID, flo
 	glEnd();
 
 	glDisable(GL_TEXTURE_2D);
+}
+
+void drawBg(int x, int y, int w, int h, unsigned int textureID) {
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, textureID);
+
+	glBegin(GL_QUADS);
+	glTexCoord2f(0, 0);
+	glVertex2f(x, y);
+	glTexCoord2f(1, 0);
+	glVertex2f(x + w, y);
+	glTexCoord2f(1, 1);
+	glVertex2f(x + w, y + h);
+	glTexCoord2f(0, 1);
+	glVertex2f(x, y + h);
+	
+	glEnd();
+	glDisable(GL_TEXTURE_2D);
+
 }
 
 void overlay(float x, float y, float w, float h) {
@@ -226,6 +245,7 @@ int main(int argc, char* argv[]) {
 	unsigned int uiID = loadTexture("assets/ui.png");
 	unsigned int uiID2 = loadTexture("assets/ui2.png");
 	unsigned int fontID = loadTexture("assets/font.png");
+	unsigned int bgID = loadTexture("assets/bg.png");
 
 	// Introducing the newest technology: The pain creator! wait no, sorry, the real name was C++.
 	
@@ -325,112 +345,128 @@ int main(int argc, char* argv[]) {
 		glClear(GL_COLOR_BUFFER_BIT);
 		int ssr = 3; /*the number of rows in the tile spritesheet. change if needed.*/
 		getscrxy((float)camx, (float)camy, &csx, &csy);
-		for (int i=0; i<floormap.size(); i++) {
-			for (int j=0; j<floormap[i].size(); j++) {
-				getscrxy((float)j, (float)i, &sx, &sy);
-				drawImg(sx-csx+(width/2), sy-csy+(height/2)+48, 256, 256, textID, floormap[i][j], (float)(32*ssr));
+		if (inmenu) {
+			int bgw, bgh, bgx, bgy;
+			if ((float)width/(float)height <= 16.0f/9.0f) {
+				bgh = height;
+				bgw = 16.0f/9.0f * height;
+				bgy = 0;
+				bgx = (width - bgw) / 2.0f;
+			} else {
+				bgh = 9.0f/16.0f * width;
+				bgw = width;
+				bgy = (height - bgh) / 2.0f;
+				bgx = 0;
 			}
-		}
 
-		for (int i=0; i<wallmap.size(); i++) {
-			for (int j=0; j<wallmap[i].size(); j++) {
-				getscrxy((float)j, (float)i, &sx, &sy);
-				draw added{
-					sx-csx+(width/2),
-					sy-csy+(height/2)-40,
-					tilesizetmp,
-					tilesizetmp,
-					textID,
-					wallmap[i][j],
-					(float)(32*ssr)
-				};
-
-				draw added2{
-					sx-csx+(width/2),
-					sy-csy+(height/2)-136,
-					tilesizetmp,
-					tilesizetmp,
-					textID,
-					wallmap[i][j],
-					(float)(32*ssr)
-				};
-				if (sy <= (height/2)+96) {
-					buffer.push_back(added);
-					buffer.push_back(added2);
-				} else {
-					buffer2.push_back(added);
-					buffer2.push_back(added2);
+			drawBg(bgx, bgy, bgw, bgh, bgID);
+		} else {
+			for (int i=0; i<floormap.size(); i++) {
+				for (int j=0; j<floormap[i].size(); j++) {
+					getscrxy((float)j, (float)i, &sx, &sy);
+					drawImg(sx-csx+(width/2), sy-csy+(height/2)+48, 256, 256, textID, floormap[i][j], (float)(32*ssr));
 				}
 			}
-		}
 
-		for (int i=0; i<specialmap.size(); i++) {
-			for (int j=0; j<specialmap[i].size(); j++) {
-				getscrxy((float)j, (float)i, &sx, &sy);
-				draw added{
-					sx-csx+(width/2),
-					sy-csy+(height/2)-24,
-					tilesizetmp,
-					tilesizetmp,
-					textID,
-					specialmap[i][j],
-					(float)(32*ssr)
-				};
-				if (sy <= (height/2)+96) {
-					buffer.push_back(added);
-				} else {
-					buffer2.push_back(added);
+			for (int i=0; i<wallmap.size(); i++) {
+				for (int j=0; j<wallmap[i].size(); j++) {
+					getscrxy((float)j, (float)i, &sx, &sy);
+					draw added{
+						sx-csx+(width/2),
+						sy-csy+(height/2)-40,
+						tilesizetmp,
+						tilesizetmp,
+						textID,
+						wallmap[i][j],
+						(float)(32*ssr)
+					};
+
+					draw added2{
+						sx-csx+(width/2),
+						sy-csy+(height/2)-136,
+						tilesizetmp,
+						tilesizetmp,
+						textID,
+						wallmap[i][j],
+						(float)(32*ssr)
+					};
+					if (sy <= (height/2)+96) {
+						buffer.push_back(added);
+						buffer.push_back(added2);
+					} else {
+						buffer2.push_back(added);
+						buffer2.push_back(added2);
+					}
 				}
 			}
-		}
+
+			for (int i=0; i<specialmap.size(); i++) {
+				for (int j=0; j<specialmap[i].size(); j++) {
+					getscrxy((float)j, (float)i, &sx, &sy);
+					draw added{
+						sx-csx+(width/2),
+						sy-csy+(height/2)-24,
+						tilesizetmp,
+						tilesizetmp,
+						textID,
+						specialmap[i][j],
+						(float)(32*ssr)
+					};
+					if (sy <= (height/2)+96) {
+						buffer.push_back(added);
+					} else {
+						buffer2.push_back(added);
+					}
+				}
+			}
 		
-		for (int i=0; i<buffer.size(); i++) {
-			drawImg(buffer[i].x, buffer[i].y, buffer[i].w, buffer[i].h, buffer[i].text, buffer[i].tile, buffer[i].ssh);
-		}
+			for (int i=0; i<buffer.size(); i++) {
+				drawImg(buffer[i].x, buffer[i].y, buffer[i].w, buffer[i].h, buffer[i].text, buffer[i].tile, buffer[i].ssh);
+			}
 
-		int pssr = 1;
-		drawImg(width/2-96, height/2-96, 192, 192, playerID, state, (float)(32*pssr));
+			int pssr = 1;
+			drawImg(width/2-96, height/2-96, 192, 192, playerID, state, (float)(32*pssr));
 
-		for (int i=0; i<buffer2.size(); i++) {
-			drawImg(buffer2[i].x, buffer2[i].y, buffer2[i].w, buffer2[i].h, buffer2[i].text, buffer2[i].tile, buffer2[i].ssh);
-		}
+			for (int i=0; i<buffer2.size(); i++) {
+				drawImg(buffer2[i].x, buffer2[i].y, buffer2[i].w, buffer2[i].h, buffer2[i].text, buffer2[i].tile, buffer2[i].ssh);
+			}
 		
-		if (paused) {
-			overlay(0.0f, 0.0f, (float)width, (float)height);
+			if (paused) {
+				overlay(0.0f, 0.0f, (float)width, (float)height);
 			
-			int btn1y = (height/2)-132;
-			int btn2y = (height/2)-20;
-			int btn3y = (height/2)+92;
-			drawGUI(128, btn1y, width-256, 96, uiID, 64.0f);
-			drawGUI(128, btn2y, width-256, 96, uiID, 64.0f);
-			drawGUI(128, btn3y, width-256, 96, uiID, 64.0f);
+				int btn1y = (height/2)-132;
+				int btn2y = (height/2)-20;
+				int btn3y = (height/2)+92;
+				drawGUI(128, btn1y, width-256, 96, uiID, 64.0f);
+				drawGUI(128, btn2y, width-256, 96, uiID, 64.0f);
+				drawGUI(128, btn3y, width-256, 96, uiID, 64.0f);
 
-			float volx = volume * ((float)(width-160) - 128) / 100;
-			overlay(128+volx, btn2y, 32, 96);
+				float volx = volume * ((float)(width-160) - 128) / 100;
+				overlay(128+volx, btn2y, 32, 96);
 
-			write((width/2)-224, btn1y+28, 13, "Back to Game", fontID, 320.0f);
-			write((width/2)-128, btn2y+28, 7, "Volume", fontID, 320.0f);
-			write((width/2)-176, btn3y+28, 10, "Main Menu", fontID, 320.0f);
+				write((width/2)-224, btn1y+28, 13, "Back to Game", fontID, 320.0f);
+				write((width/2)-128, btn2y+28, 7, "Volume", fontID, 320.0f);
+				write((width/2)-176, btn3y+28, 10, "Main Menu", fontID, 320.0f);
 			
-			if (holding) {
-				if (curx >= 128 && curx <= width - 128  && cury >= btn1y && cury <= btn1y+96) {
-					paused = false;
+				if (holding) {
+					if (curx >= 128 && curx <= width - 128  && cury >= btn1y && cury <= btn1y+96) {
+						paused = false;
+					}
+					if (curx >= 128 && cury >= btn2y && cury <= btn2y+96) {
+						volume = (curx - 128.0f) * 100.0f / (width - 288);
+						if (volume > 100) volume = 100;
+						else if (volume < 0) volume = 0;
+					}
 				}
-				if (curx >= 128 && cury >= btn2y && cury <= btn2y+96) {
-					volume = (curx - 128.0f) * 100.0f / (width - 288);
-					if (volume > 100) volume = 100;
-					else if (volume < 0) volume = 0;
+			}
+
+			if (ingui) {
+				overlay(0.0f, 0.0f, (float)width, (float)height);
+				if (furniture == 11) {
+					drawGUI(width/2 - (0.3536*(height-256)), 128, 0.707*(height-256), height-256, uiID2, 64.0f);
 				}
 			}
 		}
-
-		if (ingui) {
-			overlay(0.0f, 0.0f, (float)width, (float)height);
-			if (furniture == 11) {
-				drawGUI(128, 128, width-256, height-256, uiID2, 64.0f);
-			}
-		}
-
 		glfwSwapBuffers(screen);
 		glfwPollEvents();
 
