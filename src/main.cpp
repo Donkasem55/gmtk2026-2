@@ -128,21 +128,30 @@ void drawImg(int x, int y, int w, int h, unsigned int textureID, int tileID, flo
 	// if you read this you're bi
 
 	glBegin(GL_QUADS);
-	//glTexCoord2f(0, 0);
 	glTexCoord2f(u1, v1);
 	glVertex2f(x, y);
-	//glTexCoord2f(1, 0);
 	glTexCoord2f(u2, v1);
 	glVertex2f(x + w, y);
-	//glTexCoord2f(1, 1);
 	glTexCoord2f(u2, v2);
 	glVertex2f(x + w, y + h);
-	//glTexCoord2f(0, 1);
 	glTexCoord2f(u1, v2);
 	glVertex2f(x, y + h);
 	glEnd();
 
 	glDisable(GL_TEXTURE_2D);
+}
+
+void overlay(float w, float h, bool paused) {
+	if (paused) {
+		glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
+		glBegin(GL_QUADS);
+		glVertex2f(0.0f, 0.0f);
+		glVertex2f(w, 0.0f);
+		glVertex2f(w, h);
+		glVertex2f(0.0f, h);
+		glEnd();
+		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	}
 }
 
 void drawGUI(int x1, int y1, int w, int h, unsigned int textureID, float ssh) {
@@ -164,28 +173,6 @@ void drawGUI(int x1, int y1, int w, int h, unsigned int textureID, float ssh) {
 	drawImg(x3, y3, 32, 32, textureID, 8, ssh);
 }
 
-void reload(
-	std::vector<std::vector<int>>* floormap,
-	std::vector<std::vector<int>>* wallmap,
-	std::vector<std::vector<int>>* specialmap,
-	char* dirname,
-	int* pass
-) {
-	char fm[22];
-	char wm[20];
-	char sm[24];
-	strcpy(fm, dirname);
-	strcpy(wm, dirname);
-	strcpy(sm, dirname);
-	strcat(fm, "floormap.txt");
-	strcat(wm, "wallmap.txt");
-	strcat(sm, "specialmap.txt");
-	*floormap = readmap(fm);
-	*wallmap = readmap(wm);
-	*specialmap = readmap(sm);
-	*pass = randrange(0, 1000000);
-}
-
 // we live in a cruel world
 
 int main(int argc, char* argv[]) {
@@ -203,17 +190,18 @@ int main(int argc, char* argv[]) {
 	glDisable(GL_SCISSOR_TEST);
 	glDisable(GL_CULL_FACE);
 
-	int mvmnt[] = {GLFW_KEY_E, GLFW_KEY_D, GLFW_KEY_S, GLFW_KEY_F, GLFW_KEY_R};
+	int mvmnt[] = {GLFW_KEY_E, GLFW_KEY_D, GLFW_KEY_S, GLFW_KEY_F, GLFW_KEY_ESCAPE};
 	unsigned int state = 0;
 
 	int level = 0;
-	char dirname[10];
-	snprintf(dirname, sizeof(dirname), "levels/%d/");
+	const char* fms[] = {"levels/0/floor.txt", "levels/1/floor.txt", "levels/2/floor.txt", "levels/3/floor.txt", "levels/4/floor.txt"};
+	const char* wms[] = {"levels/0/wall.txt", "levels/1/wall.txt", "levels/2/wall.txt", "levels/3/wall.txt", "levels/4/wall.txt"};
+	const char* sms[] = {"levels/0/special.txt", "levels/1/special.txt", "levels/2/special.txt", "levels/3/special.txt", "levels/4/special.txt"};
 
-	std::vector<std::vector<int>> floormap;
-	std::vector<std::vector<int>> wallmap;
-	std::vector<std::vector<int>> specialmap;
-	int pass;
+	std::vector<std::vector<int>> floormap = readmap(fms[level]);
+	std::vector<std::vector<int>> wallmap = readmap(wms[level]);
+	std::vector<std::vector<int>> specialmap = readmap(sms[level]);
+	int pass = randrange(0, 1000000);
 
 
 	unsigned int textID = loadTexture("assets/tiles.png");
@@ -241,22 +229,22 @@ int main(int argc, char* argv[]) {
 		if (glfwGetKey(screen, mvmnt[0]) == GLFW_PRESS) {
 			dy -= speed*3/2;
 			dx -= speed*3/2;
-			state = 1;
+			if (!paused) state = 1;
 		}
 		if (glfwGetKey(screen, mvmnt[1]) == GLFW_PRESS) {
 			dy += speed*3/2;
 			dx += speed*3/2;
-			state = 0;
+			if (!paused) state = 0;
 		}
 		if (glfwGetKey(screen, mvmnt[2]) == GLFW_PRESS) {
 			dy += speed;
 			dx -= speed;
-			state = 3;
+			if (!paused) state = 3;
 		}
 		if (glfwGetKey(screen, mvmnt[3]) == GLFW_PRESS) {
 			dy -= speed;
 			dx += speed;
-			state = 2;
+			if (!paused) state = 2;
 		}
 		if (glfwGetKey(screen, mvmnt[4]) == GLFW_PRESS) {
 			if (!ispaused) {
@@ -269,7 +257,7 @@ int main(int argc, char* argv[]) {
 
 		// WHY WHY WHY
 		
-		if (!ispaused) {
+		if (!paused) {
 			float newx = px+dx;
 			float newy = py+dy;
 			if (wallmap[py+1][(int)floor(newx)] == -1 || wallmap[py+1][(int)floor(newx)] == 12) {
@@ -362,6 +350,10 @@ int main(int argc, char* argv[]) {
 
 		for (int i=0; i<buffer2.size(); i++) {
 			drawImg(buffer2[i].x, buffer2[i].y, buffer2[i].w, buffer2[i].h, buffer2[i].text, buffer2[i].tile, buffer2[i].ssh);
+		}
+
+		if (paused) {
+			overlay((float)width, (float)height, paused);
 		}
 
 		glfwSwapBuffers(screen);
