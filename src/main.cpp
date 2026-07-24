@@ -40,7 +40,7 @@ bool ingui = false;
 bool isingui = false;
 
 bool holding = false;
-unsigned volume = 50;
+unsigned volume = 100;
 
 void getscrxy(float x, float y, float* xout, float* yout) {
 	*xout = tilewidth/2 * (x-y);
@@ -232,8 +232,11 @@ int main(int argc, char* argv[]) {
 	while (!glfwWindowShouldClose(screen)) {
 		float fst = glfwGetTime();
 
-		glfwGetFramebufferSize(screen, &width, &height);
-		glViewport(0, 0, width, height);
+		int fbw, fbh;
+		glfwGetFramebufferSize(screen, &fbw, &fbh);
+		glViewport(0, 0, fbw, fbh);
+		
+		glfwGetWindowSize(screen, &width, &height);
 
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
@@ -395,26 +398,28 @@ int main(int argc, char* argv[]) {
 		if (paused) {
 			overlay(0.0f, 0.0f, (float)width, (float)height);
 			
-			int btn1y = (height/2)-160;
-			int btn2y = (height/2)-48;
-			int btn3y = (height/2)+64;
+			int btn1y = (height/2)-132;
+			int btn2y = (height/2)-20;
+			int btn3y = (height/2)+92;
 			drawGUI(128, btn1y, width-256, 96, uiID, 64.0f);
 			drawGUI(128, btn2y, width-256, 96, uiID, 64.0f);
 			drawGUI(128, btn3y, width-256, 96, uiID, 64.0f);
 
-			float volx = (volume/100)*(float)(width-288);
-			overlay(volx+128, btn2y+28, 32, 96);
+			float volx = volume * ((float)(width-160) - 128) / 100;
+			overlay(128+volx, btn2y, 32, 96);
 
 			write((width/2)-224, btn1y+28, 13, "Back to Game", fontID, 320.0f);
 			write((width/2)-128, btn2y+28, 7, "Volume", fontID, 320.0f);
 			write((width/2)-176, btn3y+28, 10, "Main Menu", fontID, 320.0f);
 			
 			if (holding) {
-				if (curx >= 128 && curx <= width-128 && cury >= btn1y-104 && cury <= btn1y-32) {
+				if (curx >= 128 && curx <= width - 128  && cury >= btn1y && cury <= btn1y+96) {
 					paused = false;
 				}
-				if (curx >= 128 && curx <= width-128 && cury >= btn1y-104 && cury <= btn1y-32) {
-					paused = false;
+				if (curx >= 128 && cury >= btn2y && cury <= btn2y+96) {
+					volume = (curx - 128.0f) * 100.0f / (width - 288);
+					if (volume > 100) volume = 100;
+					else if (volume < 0) volume = 0;
 				}
 			}
 		}
