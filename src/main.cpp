@@ -39,8 +39,11 @@ bool ispaused = false;
 bool ingui = false;
 bool isingui = false;
 
-bool inmenu = true;
 bool holding = false;
+bool isholding = false;
+bool clickhold = false;
+
+bool inmenu = true;
 unsigned volume = 100;
 
 void getscrxy(float x, float y, float* xout, float* yout) {
@@ -53,7 +56,9 @@ std::vector<std::string> split(std::string input, char delimiter) {
 	std::string token;
 	std::vector<std::string> output;
 	while (std::getline(ss, token, delimiter)) {
-		output.push_back(token);
+		if (token != "" && token != " ") {
+			output.push_back(token);
+		}
 	}
 	return output;
 }
@@ -184,6 +189,8 @@ void drawGUI(int x1, int y1, int w, int h, unsigned int textureID, float ssh) {
 	int w2 = w-64;
 	int h2 = h-64;
 
+	glColor4f(1.0f, 1.0f, 1.0f, 0.7f);
+	
 	drawImg(x1, y1, 32, 32, textureID, 0, ssh);
 	drawImg(x2, y1, w2, 32, textureID, 1, ssh);
 	drawImg(x3, y1, 32, 32, textureID, 2, ssh);
@@ -193,6 +200,8 @@ void drawGUI(int x1, int y1, int w, int h, unsigned int textureID, float ssh) {
 	drawImg(x1, y3, 32, 32, textureID, 6, ssh);
 	drawImg(x2, y3, w2, 32, textureID, 7, ssh);
 	drawImg(x3, y3, 32, 32, textureID, 8, ssh);
+	
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
 void write(int x, int y, int cpl, char* text, unsigned int textureID, float ssh) {
@@ -234,7 +243,7 @@ int main(int argc, char* argv[]) {
 	const char* fms[] = {"levels/0/floor.txt", "levels/1/floor.txt", "levels/2/floor.txt", "levels/3/floor.txt", "levels/4/floor.txt"};
 	const char* wms[] = {"levels/0/wall.txt", "levels/1/wall.txt", "levels/2/wall.txt", "levels/3/wall.txt", "levels/4/wall.txt"};
 	const char* sms[] = {"levels/0/special.txt", "levels/1/special.txt", "levels/2/special.txt", "levels/3/special.txt", "levels/4/special.txt"};
-
+				
 	std::vector<std::vector<int>> floormap = readmap(fms[level]);
 	std::vector<std::vector<int>> wallmap = readmap(wms[level]);
 	std::vector<std::vector<int>> specialmap = readmap(sms[level]);
@@ -302,10 +311,22 @@ int main(int argc, char* argv[]) {
 		}
 
 		holding = false;
+		clickhold = false;
 		if (glfwGetMouseButton(screen, GLFW_MOUSE_BUTTON_LEFT)) {
-			holding = true;
+			if (!isholding) {
+				holding = true;
+				isholding = true;
+			}
+			clickhold = true;
+		} else {
+			isholding = false;
 		}
-		int furniture = specialmap[(int)floor(py)][(int)floor(px)-1];
+		int furniture = -1;
+		if ((int)floor(py) < specialmap.size()) {
+			if ((int)floor(px) < specialmap[(int)floor(py)].size()) {
+				furniture = specialmap[(int)floor(py)][(int)floor(px)-1];
+			}
+		}
 		if (glfwGetKey(screen, mvmnt[5]) == GLFW_PRESS) {
 			if (!isingui && (furniture != -1 && furniture != 12)) {
 				ingui = !(ingui);
@@ -315,6 +336,7 @@ int main(int argc, char* argv[]) {
 			isingui = false;
 		}
 
+		
 		// WHY WHY WHY
 		
 		if (!(paused || ingui)) {
@@ -360,6 +382,71 @@ int main(int argc, char* argv[]) {
 			}
 
 			drawBg(bgx, bgy, bgw, bgh, bgID);
+		
+			int btn1y = (height/2)-272;
+			int btn2y = (height/2)-160;
+			int btn3y = (height/2)-48;
+			int btn4y = (height/2)+64;
+			int btn5y = (height/2)+176;
+
+			drawGUI(128, btn1y, width-256, 96, uiID2, 64.0f);
+			drawGUI(128, btn2y, width-256, 96, uiID2, 64.0f);
+			drawGUI(128, btn3y, width-256, 96, uiID2, 64.0f);
+			drawGUI(128, btn4y, width-256, 96, uiID2, 64.0f);
+			drawGUI(128, btn5y, width-256, 96, uiID2, 64.0f);
+			
+			write((width/2)-176, btn1y+28, 10, "Chapter 1", fontID, 320.0f);
+			write((width/2)-176, btn2y+28, 10, "Chapter 2", fontID, 320.0f);
+			write((width/2)-176, btn3y+28, 10, "Chapter 3", fontID, 320.0f);
+			write((width/2)-176, btn4y+28, 10, "Chapter 4", fontID, 320.0f);
+			write((width/2)-176, btn5y+28, 10, "Chapter 5", fontID, 320.0f);
+			if (holding) {
+				if (curx >= 128 && curx <= width - 128  && cury >= btn1y && cury <= btn1y+96) {
+					level = 0;
+					inmenu = false;
+			
+					floormap = readmap(fms[level]);
+					wallmap = readmap(wms[level]);
+					specialmap = readmap(sms[level]);
+					pass = randrange(0, 1000000);
+				}
+				if (curx >= 128 && curx <= width - 128  && cury >= btn2y && cury <= btn2y+96) {
+					level = 1;
+					inmenu = false;
+			
+					floormap = readmap(fms[level]);
+					wallmap = readmap(wms[level]);
+					specialmap = readmap(sms[level]);
+					pass = randrange(0, 1000000);
+				}
+				if (curx >= 128 && curx <= width - 128  && cury >= btn3y && cury <= btn3y+96) {
+					level = 2;
+					inmenu = false;
+			
+					floormap = readmap(fms[level]);
+					wallmap = readmap(wms[level]);
+					specialmap = readmap(sms[level]);
+					pass = randrange(0, 1000000);
+				}
+				if (curx >= 128 && curx <= width - 128  && cury >= btn4y && cury <= btn4y+96) {
+					level = 3;
+					inmenu = false;
+			
+					floormap = readmap(fms[level]);
+					wallmap = readmap(wms[level]);
+					specialmap = readmap(sms[level]);
+					pass = randrange(0, 1000000);
+				}
+				if (curx >= 128 && curx <= width - 128  && cury >= btn5y && cury <= btn5y+96) {
+					level = 4;
+					inmenu = false;
+			
+					floormap = readmap(fms[level]);
+					wallmap = readmap(wms[level]);
+					specialmap = readmap(sms[level]);
+					pass = randrange(0, 1000000);
+				}
+			}
 		} else {
 			for (int i=0; i<floormap.size(); i++) {
 				for (int j=0; j<floormap[i].size(); j++) {
@@ -390,7 +477,7 @@ int main(int argc, char* argv[]) {
 						wallmap[i][j],
 						(float)(32*ssr)
 					};
-					if (sy <= (height/2)+96) {
+					if (sy-csy-136 <= -96) {
 						buffer.push_back(added);
 						buffer.push_back(added2);
 					} else {
@@ -399,7 +486,7 @@ int main(int argc, char* argv[]) {
 					}
 				}
 			}
-
+			
 			for (int i=0; i<specialmap.size(); i++) {
 				for (int j=0; j<specialmap[i].size(); j++) {
 					getscrxy((float)j, (float)i, &sx, &sy);
@@ -412,14 +499,10 @@ int main(int argc, char* argv[]) {
 						specialmap[i][j],
 						(float)(32*ssr)
 					};
-					if (sy <= (height/2)+96) {
-						buffer.push_back(added);
-					} else {
-						buffer2.push_back(added);
-					}
+					buffer.push_back(added);
 				}
 			}
-		
+
 			for (int i=0; i<buffer.size(); i++) {
 				drawImg(buffer[i].x, buffer[i].y, buffer[i].w, buffer[i].h, buffer[i].text, buffer[i].tile, buffer[i].ssh);
 			}
@@ -429,6 +512,11 @@ int main(int argc, char* argv[]) {
 
 			for (int i=0; i<buffer2.size(); i++) {
 				drawImg(buffer2[i].x, buffer2[i].y, buffer2[i].w, buffer2[i].h, buffer2[i].text, buffer2[i].tile, buffer2[i].ssh);
+			}
+
+			if (level == 0) {
+				write(16, height-128, 49, "WASD for movements", fontID, 320.0f);
+				write(16, height-64, 49, "E for using, ESC to open menu", fontID, 320.0f);
 			}
 		
 			if (paused) {
@@ -452,6 +540,14 @@ int main(int argc, char* argv[]) {
 					if (curx >= 128 && curx <= width - 128  && cury >= btn1y && cury <= btn1y+96) {
 						paused = false;
 					}
+					if (curx >= 128 && curx <= width - 128  && cury >= btn3y && cury <= btn3y+96) {
+						px = 3.0f;
+						py = 3.0f;
+						inmenu = true;
+						paused = false;
+					}
+				}
+				if (clickhold) {
 					if (curx >= 128 && cury >= btn2y && cury <= btn2y+96) {
 						volume = (curx - 128.0f) * 100.0f / (width - 288);
 						if (volume > 100) volume = 100;
@@ -464,6 +560,9 @@ int main(int argc, char* argv[]) {
 				overlay(0.0f, 0.0f, (float)width, (float)height);
 				if (furniture == 11) {
 					drawGUI(width/2 - (0.3536*(height-256)), 128, 0.707*(height-256), height-256, uiID2, 64.0f);
+					char buffer[7];
+					snprintf(buffer, sizeof(buffer), "%d", pass);
+					write(width/2 - 128, height/2 - 16, 7, buffer, fontID, 320.0f);
 				}
 			}
 		}
