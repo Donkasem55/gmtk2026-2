@@ -39,6 +39,9 @@ bool ispaused = false;
 bool ingui = false;
 bool isingui = false;
 
+bool holding = false;
+unsigned volume = 50;
+
 void getscrxy(float x, float y, float* xout, float* yout) {
 	*xout = tilewidth/2 * (x-y);
 	*yout = tileheight/2 * (x+y);
@@ -141,14 +144,14 @@ void drawImg(int x, int y, int w, int h, unsigned int textureID, int tileID, flo
 	glDisable(GL_TEXTURE_2D);
 }
 
-void overlay(float w, float h) {
+void overlay(float x, float y, float w, float h) {
 	glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
 
 	glBegin(GL_QUADS);
-	glVertex2f(0.0f, 0.0f);
-	glVertex2f(w, 0.0f);
-	glVertex2f(w, h);
-	glVertex2f(0.0f, h);
+	glVertex2f(x, y);
+	glVertex2f(x+w, y);
+	glVertex2f(x+w, y+h);
+	glVertex2f(x, y+h);
 	glEnd();
 	
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
@@ -241,7 +244,7 @@ int main(int argc, char* argv[]) {
 
 		double curx;
 		double cury;
-		glfwSetCursorPosCallback(screen, &curx, &cury);
+		glfwGetCursorPos(screen, &curx, &cury);
 
 		float dx = 0.0f;
 		float dy = 0.0f;
@@ -274,6 +277,11 @@ int main(int argc, char* argv[]) {
 		} else {
 			ispaused = false;
 		}
+
+		holding = false;
+		if (glfwGetMouseButton(screen, GLFW_MOUSE_BUTTON_LEFT)) {
+			holding = true;
+		}
 		int furniture = specialmap[(int)floor(py)][(int)floor(px)-1];
 		if (glfwGetKey(screen, mvmnt[5]) == GLFW_PRESS) {
 			if (!isingui && (furniture != -1 && furniture != 12)) {
@@ -286,7 +294,7 @@ int main(int argc, char* argv[]) {
 
 		// WHY WHY WHY
 		
-		if (!paused) {
+		if (!(paused || ingui)) {
 			float newx = px+dx;
 			float newy = py+dy;
 			if (wallmap[py+1][(int)floor(newx)] == -1 || wallmap[py+1][(int)floor(newx)] == 12) {
@@ -295,7 +303,7 @@ int main(int argc, char* argv[]) {
 			if (wallmap[(int)floor(newy)+1][px] == -1 || wallmap[(int)floor(newy)+1][px] == 12) { // why the fuck does adding +1 work
 				py = newy;
 			}
-		} else {
+		} else if (paused) {
 			ingui = false;
 			isingui = false;
 		}
@@ -385,18 +393,34 @@ int main(int argc, char* argv[]) {
 		}
 		
 		if (paused) {
-			overlay((float)width, (float)height);
+			overlay(0.0f, 0.0f, (float)width, (float)height);
+			
 			int btn1y = (height/2)-160;
 			int btn2y = (height/2)-48;
 			int btn3y = (height/2)+64;
 			drawGUI(128, btn1y, width-256, 96, uiID, 64.0f);
 			drawGUI(128, btn2y, width-256, 96, uiID, 64.0f);
 			drawGUI(128, btn3y, width-256, 96, uiID, 64.0f);
+
+			float volx = (volume/100)*(float)(width-288);
+			overlay(volx+128, btn2y+28, 32, 96);
+
 			write((width/2)-224, btn1y+28, 13, "Back to Game", fontID, 320.0f);
+			write((width/2)-128, btn2y+28, 7, "Volume", fontID, 320.0f);
+			write((width/2)-176, btn3y+28, 10, "Main Menu", fontID, 320.0f);
+			
+			if (holding) {
+				if (curx >= 128 && curx <= width-128 && cury >= btn1y-104 && cury <= btn1y-32) {
+					paused = false;
+				}
+				if (curx >= 128 && curx <= width-128 && cury >= btn1y-104 && cury <= btn1y-32) {
+					paused = false;
+				}
+			}
 		}
 
 		if (ingui) {
-			overlay((float)width, (float)height);
+			overlay(0.0f, 0.0f, (float)width, (float)height);
 			if (furniture == 11) {
 				drawGUI(128, 128, width-256, height-256, uiID2, 64.0f);
 			}
