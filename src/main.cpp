@@ -52,6 +52,9 @@ bool inmenu = false;
 bool inprol = true;
 unsigned volume = 100;
 
+bool won = false;
+double timewon;
+
 bool dead = false;
 char guess[7] = "000000";
 
@@ -367,6 +370,7 @@ int main(int argc, char* argv[]) {
 	unsigned int uiID2 = loadTexture("assets/ui2.png");
 	unsigned int fontID = loadTexture("assets/font.png");
 	unsigned int bgID = loadTexture("assets/bg.png");
+	unsigned int logoID = loadTexture("assets/logo1.png");
 
 	loadprog();
 	double elapsed = glfwGetTime();
@@ -488,6 +492,29 @@ int main(int argc, char* argv[]) {
 		getscrxy((float)camx, (float)camy, &csx, &csy);
 		if (inprol) {
 			double t = glfwGetTime();
+			int bgw, bgh, bgx, bgy;
+			if ((float)width/(float)height <= 16.0f/9.0f) {
+				bgh = height;
+				bgw = 16.0f/9.0f * height;
+				bgy = 0;
+				bgx = (width - bgw) / 2.0f;
+			} else {
+				bgh = 9.0f/16.0f * width;
+				bgw = width;
+				bgy = (height - bgh) / 2.0f;
+				bgx = 0;
+			}
+
+			drawBg(bgx, bgy, bgw, bgh, bgID);
+			int shr;
+			if (width < height) {
+				shr = width;
+			} else {
+				shr = height;
+			}
+
+			drawImg((width-shr)/2, (height-shr)/2, shr, shr, playerID, 0, (float)(32*pssr));
+
 			drawGUI(0, height-192, width, 192, uiID, 64.0f);
 			drawImg(0, height-192, 192, 192, playerID, 2, (float)(32*pssr));
 			write(192, (height)-160, 22, "Raine Rosalyn Renner:", fontID, 320.0f);
@@ -519,6 +546,94 @@ int main(int argc, char* argv[]) {
 				inmenu = true;
 				inprol = false;
 				glClearColor(0.0f, 0.0f, 0.1f, 1.0f);
+			}
+		}
+
+		else if (won) {
+			double t = glfwGetTime() - timewon;
+			int bgw, bgh, bgx, bgy;
+			if ((float)width/(float)height <= 16.0f/9.0f) {
+				bgh = height;
+				bgw = 16.0f/9.0f * height;
+				bgy = 0;
+				bgx = (width - bgw) / 2.0f;
+			} else {
+				bgh = 9.0f/16.0f * width;
+				bgw = width;
+				bgy = (height - bgh) / 2.0f;
+				bgx = 0;
+			}
+
+			drawBg(bgx, bgy, bgw, bgh, bgID);
+			int shr;
+			if (width < height) {
+				shr = width;
+			} else {
+				shr = height;
+			}
+
+			drawImg((width/shr)/2, (height-shr)/2, shr, shr, playerID, 1, (float)(32*pssr));
+			drawGUI(0, height-192, width, 192, uiID, 64.0f);
+			drawImg(0, height-192, 192, 192, playerID, 2, (float)(32*pssr));
+			write(192, (height)-160, 22, "Raine Rosalyn Renner:", fontID, 320.0f);
+			if (t >= 2.0 && t < 6.0) {
+				write(192, (height)-96, 64, "... [HOLD ENTER TO FAST FORWARD]", fontID, 320.0f);
+
+			} else if (t < 2.0) {
+				// does nothing
+
+			} else if (t < 10.0) {
+				write(192, (height)-96, 28, "Hello, mother....", fontID, 320.0f);
+
+			} else if (t < 14.0) {
+				write(192, (height)-96, 28, "Long time no see.", fontID, 320.0f);
+
+			} else if (t < 18.0) {
+				write(192, (height)-96, 28, "In mere minutes, the meteor will wipe us all out.", fontID, 320.0f);
+
+			} else if (t < 22.0) {
+				write(192, (height)-96, 36, "I used to believe my life wouldn't matter after the impact.", fontID, 320.0f);
+
+			} else if (t < 26.0) {
+				write(192, (height)-96, 37, "But now, I've realised.", fontID, 320.0f);
+
+			} else if (t < 30.0) {
+				write(192, (height)-96, 37, "Whether I panic or not,", fontID, 320.0f);
+
+			} else if (t < 34.0) {
+				write(192, (height)-96, 37, "It will come anyways.", fontID, 320.0f);
+
+			} else if (t < 38.0) {
+				write(192, (height)-96, 37, "All I could do is accept my fate and cherish the time I have left..", fontID, 320.0f);
+
+			} else if (t < 42.0) {
+				write(192, (height)-96, 34, "See you in the afterlife. If one exists.", fontID, 320.0f);
+
+			} else if (t < 46.0) {
+				write(192, (height)-96, 28, "Thank you, player.", fontID, 320.0f);
+
+			} else if (t < 50.0) {
+				write(192, (height)-96, 64, "See you in the afterlife too, Player.", fontID, 320.0f);
+
+			} else if (t < 54.0) {
+				write(192, (height)-96, 23, "Cherish what you have, it's not forever.", fontID, 320.0f);
+
+			} else if (t < 58.0) {
+				write(192, (height)-96, 64, "Until then, goodbye.", fontID, 320.0f);
+
+			} else if (t < 62.0) {
+				write(192, (height)-96, 25, "(by the way, press enter to return to main menu.)", fontID, 320.0f);
+
+			}
+
+			if (glfwGetKey(screen, mvmnt[6]) == GLFW_PRESS) {
+				if (t >= 58.5) {
+					won = false;
+					inmenu = true;
+					glClearColor(0.0f, 0.0f, 0.1f, 1.0f);
+				} else {
+					timewon -= 0.05;
+				}
 			}
 		}
 
@@ -554,50 +669,58 @@ int main(int argc, char* argv[]) {
 			}
 
 			drawBg(bgx, bgy, bgw, bgh, bgID);
-		
-			int btn1y = (height/2)-272;
-			int btn2y = (height/2)-160;
-			int btn3y = (height/2)-48;
-			int btn4y = (height/2)+64;
-			int btn5y = (height/2)+176;
-			
+
+			int offy = 120;
+			int btn1y = (height/2)-176+offy;
+			int btn2y = (height/2)-104+offy;
+			int btn3y = (height/2)-32+offy;
+			int btn4y = (height/2)+40+offy;
+			int btn5y = (height/2)+112+offy;
+
+			int logow, logoh, logox, logoy;
+			logoh = 2.0f/3.0f*btn1y;
+			logoy = btn1y/6.0f;
+			logow = 19.0f/8.0f * logoh;
+			logox = (width-logow)/2.0f;
+			drawBg(logox, logoy, logow, logoh, logoID);
+
 			if (finished >= 0) {
-				drawGUI(128, btn1y, width-256, 96, uiID, 64.0f);
+				drawGUI(128, btn1y, width-256, 64, uiID, 64.0f);
 			} else {
-				drawGUI(128, btn1y, width-256, 96, uiID2, 64.0f);
+				drawGUI(128, btn1y, width-256, 64, uiID2, 64.0f);
 			}
-			write((width/2)-176, btn1y+28, 10, "Chapter 1", fontID, 320.0f);
-			
+			write((width/2)-176, btn1y+14, 10, "Chapter 1", fontID, 320.0f);
+
 			if (finished >= 1) {
-				drawGUI(128, btn2y, width-256, 96, uiID, 64.0f);
+				drawGUI(128, btn2y, width-256, 64, uiID, 64.0f);
 			} else {
-				drawGUI(128, btn2y, width-256, 96, uiID2, 64.0f);
+				drawGUI(128, btn2y, width-256, 64, uiID2, 64.0f);
 			}
-			write((width/2)-176, btn2y+28, 10, "Chapter 2", fontID, 320.0f);
-			
+			write((width/2)-176, btn2y+14, 10, "Chapter 2", fontID, 320.0f);
+
 			if (finished >= 2) {
-				drawGUI(128, btn3y, width-256, 96, uiID, 64.0f);
+				drawGUI(128, btn3y, width-256, 64, uiID, 64.0f);
 			} else {
-				drawGUI(128, btn3y, width-256, 96, uiID2, 64.0f);
+				drawGUI(128, btn3y, width-256, 64, uiID2, 64.0f);
 			}
-			write((width/2)-176, btn3y+28, 10, "Chapter 3", fontID, 320.0f);
-			
+			write((width/2)-176, btn3y+14, 10, "Chapter 3", fontID, 320.0f);
+
 			if (finished >= 3) {
-				drawGUI(128, btn4y, width-256, 96, uiID, 64.0f);
+				drawGUI(128, btn4y, width-256, 64, uiID, 64.0f);
 			} else {
-				drawGUI(128, btn4y, width-256, 96, uiID2, 64.0f);
+				drawGUI(128, btn4y, width-256, 64, uiID2, 64.0f);
 			}
-			write((width/2)-176, btn4y+28, 10, "Chapter 4", fontID, 320.0f);
-			
+			write((width/2)-176, btn4y+14, 10, "Chapter 4", fontID, 320.0f);
+
 			if (finished >= 4) {
-				drawGUI(128, btn5y, width-256, 96, uiID, 64.0f);
+				drawGUI(128, btn5y, width-256, 64, uiID, 64.0f);
 			} else {
-				drawGUI(128, btn5y, width-256, 96, uiID2, 64.0f);
+				drawGUI(128, btn5y, width-256, 64, uiID2, 64.0f);
 			}
-			write((width/2)-176, btn5y+28, 10, "Chapter 5", fontID, 320.0f);
+			write((width/2)-176, btn5y+14, 10, "Chapter 5", fontID, 320.0f);
 
 			if (holding) {
-				if (curx >= 128 && curx <= width - 128  && cury >= btn1y && cury <= btn1y+96 && finished >= 0) {
+				if (curx >= 128 && curx <= width - 128  && cury >= btn1y && cury <= btn1y+64 && finished >= 0) {
 					level = 0;
 					inmenu = false;
 			
@@ -608,7 +731,7 @@ int main(int argc, char* argv[]) {
 
 					elapsed = glfwGetTime();
 				}
-				if (curx >= 128 && curx <= width - 128  && cury >= btn2y && cury <= btn2y+96 && finished >= 1) {
+				if (curx >= 128 && curx <= width - 128  && cury >= btn2y && cury <= btn2y+64 && finished >= 1) {
 					level = 1;
 					inmenu = false;
 			
@@ -619,7 +742,7 @@ int main(int argc, char* argv[]) {
 
 					elapsed = glfwGetTime();
 				}
-				if (curx >= 128 && curx <= width - 128  && cury >= btn3y && cury <= btn3y+96 && finished >= 2) {
+				if (curx >= 128 && curx <= width - 128  && cury >= btn3y && cury <= btn3y+64 && finished >= 2) {
 					level = 2;
 					inmenu = false;
 			
@@ -630,7 +753,7 @@ int main(int argc, char* argv[]) {
 
 					elapsed = glfwGetTime();
 				}
-				if (curx >= 128 && curx <= width - 128  && cury >= btn4y && cury <= btn4y+96 && finished >= 3) {
+				if (curx >= 128 && curx <= width - 128  && cury >= btn4y && cury <= btn4y+64 && finished >= 3) {
 					level = 3;
 					inmenu = false;
 			
@@ -641,7 +764,7 @@ int main(int argc, char* argv[]) {
 
 					elapsed = glfwGetTime();
 				}
-				if (curx >= 128 && curx <= width - 128  && cury >= btn5y && cury <= btn5y+96 && finished >= 4) {
+				if (curx >= 128 && curx <= width - 128  && cury >= btn5y && cury <= btn5y+64 && finished >= 4) {
 					level = 4;
 					inmenu = false;
 			
@@ -783,6 +906,9 @@ int main(int argc, char* argv[]) {
 					char buffer[7];
 					snprintf(buffer, sizeof(buffer), "%d", pass);
 					write(width/2 - 128, height/2 - 16, 7, buffer, fontID, 320.0f);
+				} else if (furniture == 16 ) {
+					won = true;
+					timewon = glfwGetTime();
 
 				} else if (furniture == 14) {
 					drawGUI(width/2 - (0.3536*(height-256)), 128, 0.707*(height-256), height-256, uiID, 64.0f);
