@@ -504,10 +504,10 @@ int main(int argc, char* argv[]) {
 				write(192, (height)-96, 19, "Before we perish..", fontID, 320.0f);
 
 			} else if (t < 22.0) {
-				write(192, (height)-96, 33, "Player, would you help me do it?", fontID, 320.0f);
+				write(192, (height)-96, 28, "Her grave sits in a tightly secured dimension...", fontID, 320.0f);
 			
 			} else if (t < 26.0) {
-				write(192, (height)-96, 28, "Her grave sits in a tightly secured hyperspace...", fontID, 320.0f);
+				write(192, (height)-96, 33, "Player, would you help me do it?", fontID, 320.0f);
 
 			} else {
 				inmenu = true;
