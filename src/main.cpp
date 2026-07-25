@@ -48,9 +48,11 @@ bool holding = false;
 bool isholding = false;
 bool clickhold = false;
 
-bool inmenu = true;
+bool inmenu = false;
+bool inprol = true;
 unsigned volume = 100;
 
+bool dead = false;
 char guess[7] = "000000";
 
 void getscrxy(float x, float y, float* xout, float* yout) {
@@ -175,6 +177,53 @@ void drawImg(int x, int y, int w, int h, unsigned int textureID, int tileID, flo
 	glDisable(GL_TEXTURE_2D);
 }
 
+void drawChar(int x, int y, int w, int h, unsigned int textureID, int tileID, float ssh, float r = 1.0f, float g = 1.0f, float b = 1.0f, float a = 1.0f) {
+	if (tileID == -1) {
+		tileID = 12;
+	}
+
+	glEnable(GL_TEXTURE_2D);
+
+	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
+	glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_REPLACE);
+	glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_RGB, GL_PRIMARY_COLOR);
+	glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
+	glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_REPLACE);
+	glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_RGB, GL_PRIMARY_COLOR);
+	glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
+	glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
+	glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_ALPHA, GL_TEXTURE);
+	glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
+	glColor4f(r, g, b, a);
+
+	glBindTexture(GL_TEXTURE_2D, textureID);
+
+	int tx = tileID % 8;
+	int ty = tileID / 8;
+
+	float u1 = (32*tx) / 256.0f;
+	float v1 = ((32*ty) / ssh);
+
+	float u2 = ((32*tx) + 32.0f) / 256.0f;
+	float v2 = ((32*ty + 32.0f) / ssh);
+
+	glBegin(GL_QUADS);
+	glTexCoord2f(u1, v1);
+	glVertex2f(x, y);
+	glTexCoord2f(u2, v1);
+	glVertex2f(x + w, y);
+	glTexCoord2f(u2, v2);
+	glVertex2f(x + w, y + h);
+	glTexCoord2f(u1, v2);
+	glVertex2f(x, y + h);
+	glEnd();
+
+	glDisable(GL_TEXTURE_2D);
+
+	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+}
+
 void drawBg(int x, int y, int w, int h, unsigned int textureID) {
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, textureID);
@@ -230,7 +279,7 @@ void drawGUI(int x1, int y1, int w, int h, unsigned int textureID, float ssh) {
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
-void write(int x, int y, int cpl, char* text, unsigned int textureID, float ssh) {
+void write(int x, int y, int cpl, const char* text, unsigned int textureID, float ssh, float r = 0.0f, float g = 0.0f, float b = 0.0f, float a = 1.0f) {
 	int cx = 0;
 	int cy = 0;
 	for (int i=0; text[i] != '\0'; i++) {
@@ -240,7 +289,7 @@ void write(int x, int y, int cpl, char* text, unsigned int textureID, float ssh)
 			cy += 1;
 		}
 		if ((int)text[i] != 32) {
-			drawImg(x+(cx*32), y+(cy*32), 32, 32, textureID, (int)text[i]-44, ssh);
+			drawChar(x+(cx*32), y+(cy*32), 32, 32, textureID, (int)text[i]-44, ssh, r, g, b, a);
 		}
 	}
 }
@@ -268,7 +317,7 @@ int main(int argc, char* argv[]) {
 	glfwMakeContextCurrent(screen);
 	gladLoadGL();
 
-	glClearColor(0.2, 0.2, 0.2, 1.0);
+	glClearColor(1.0, 1.0, 1.0, 1.0);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glDisable(GL_DEPTH_TEST);
@@ -299,7 +348,7 @@ int main(int argc, char* argv[]) {
 		alSourcePlay(asrcID);
 	}
 
-	int mvmnt[] = {GLFW_KEY_W, GLFW_KEY_S, GLFW_KEY_A, GLFW_KEY_D, GLFW_KEY_ESCAPE, GLFW_KEY_E};
+	int mvmnt[] = {GLFW_KEY_W, GLFW_KEY_S, GLFW_KEY_A, GLFW_KEY_D, GLFW_KEY_ESCAPE, GLFW_KEY_E, GLFW_KEY_ENTER};
 	unsigned int state = 0;
 
 	int level = 0;
@@ -320,6 +369,7 @@ int main(int argc, char* argv[]) {
 	unsigned int bgID = loadTexture("assets/bg.png");
 
 	loadprog();
+	double elapsed = glfwGetTime();
 
 	// Introducing the newest technology: The pain creator! wait no, sorry, the real name was C++.
 	
@@ -434,8 +484,62 @@ int main(int argc, char* argv[]) {
 
 		glClear(GL_COLOR_BUFFER_BIT);
 		int ssr = 3; /*the number of rows in the tile spritesheet. change if needed.*/
+		int pssr = 1;
 		getscrxy((float)camx, (float)camy, &csx, &csy);
-		if (inmenu) {
+		if (inprol) {
+			double t = glfwGetTime();
+			drawGUI(0, height-192, width, 192, uiID, 64.0f);
+			drawImg(0, height-192, 192, 192, playerID, 2, (float)(32*pssr));
+			write(192, (height)-160, 22, "Raine Rosalyn Renner:", fontID, 320.0f);
+			if (t < 6.0) {
+				write(192, (height)-96, 27, "On the 30th of July, 2026,", fontID, 320.0f);
+			
+			} else if (t < 10.0) {
+				write(192, (height)-96, 28, "A meteor will strike Earth.", fontID, 320.0f);
+
+			} else if (t < 14.0) {
+				write(192, (height)-96, 26, "I want to visit my mother one last time.", fontID, 320.0f);
+			
+			} else if (t < 18.0) {
+				write(192, (height)-96, 19, "Before we perish..", fontID, 320.0f);
+
+			} else if (t < 22.0) {
+				write(192, (height)-96, 33, "Player, would you help me do it?", fontID, 320.0f);
+			
+			} else if (t < 26.0) {
+				write(192, (height)-96, 28, "Her grave sits in a tightly secured hyperspace...", fontID, 320.0f);
+
+			} else {
+				inmenu = true;
+				inprol = false;
+				glClearColor(0.0f, 0.0f, 0.1f, 1.0f);
+			}
+
+			if (glfwGetKey(screen, mvmnt[6]) == GLFW_PRESS) {
+				inmenu = true;
+				inprol = false;
+				glClearColor(0.0f, 0.0f, 0.1f, 1.0f);
+			}
+		}
+
+		else if (dead) {
+			double t = glfwGetTime();
+			if ((t - elapsed) < 5.0) {
+				drawGUI(0, height-192, width, 192, uiID, 64.0f);
+				drawImg(0, height-192, 192, 192, playerID, 2, (float)(32*pssr));
+				write(192, (height)-160, 22, "Raine Rosalyn Renner:", fontID, 320.0f);
+				write(192, (height)-96, 26, "We died. Let's try again.", fontID, 320.0f);
+			} else {
+				inmenu = true;
+				dead = false;
+			}
+			if (glfwGetKey(screen, mvmnt[6]) == GLFW_PRESS) {
+				inmenu = true;
+				dead = false;
+			}
+		}
+
+		else if (inmenu) {
 			int bgw, bgh, bgx, bgy;
 			if ((float)width/(float)height <= 16.0f/9.0f) {
 				bgh = height;
@@ -501,6 +605,8 @@ int main(int argc, char* argv[]) {
 					wallmap = readmap(wms[level]);
 					specialmap = readmap(sms[level]);
 					pass = randrange(0, 1000000);
+
+					elapsed = glfwGetTime();
 				}
 				if (curx >= 128 && curx <= width - 128  && cury >= btn2y && cury <= btn2y+96 && finished >= 1) {
 					level = 1;
@@ -510,6 +616,8 @@ int main(int argc, char* argv[]) {
 					wallmap = readmap(wms[level]);
 					specialmap = readmap(sms[level]);
 					pass = randrange(0, 1000000);
+
+					elapsed = glfwGetTime();
 				}
 				if (curx >= 128 && curx <= width - 128  && cury >= btn3y && cury <= btn3y+96 && finished >= 2) {
 					level = 2;
@@ -519,6 +627,8 @@ int main(int argc, char* argv[]) {
 					wallmap = readmap(wms[level]);
 					specialmap = readmap(sms[level]);
 					pass = randrange(0, 1000000);
+
+					elapsed = glfwGetTime();
 				}
 				if (curx >= 128 && curx <= width - 128  && cury >= btn4y && cury <= btn4y+96 && finished >= 3) {
 					level = 3;
@@ -528,6 +638,8 @@ int main(int argc, char* argv[]) {
 					wallmap = readmap(wms[level]);
 					specialmap = readmap(sms[level]);
 					pass = randrange(0, 1000000);
+
+					elapsed = glfwGetTime();
 				}
 				if (curx >= 128 && curx <= width - 128  && cury >= btn5y && cury <= btn5y+96 && finished >= 4) {
 					level = 4;
@@ -537,6 +649,8 @@ int main(int argc, char* argv[]) {
 					wallmap = readmap(wms[level]);
 					specialmap = readmap(sms[level]);
 					pass = randrange(0, 1000000);
+
+					elapsed = glfwGetTime();
 				}
 			}
 		} else {
@@ -559,6 +673,7 @@ int main(int argc, char* argv[]) {
 						wallmap[i][j],
 						(float)(32*ssr)
 					};
+
 
 					draw added2{
 						sx-csx+(width/2),
@@ -599,7 +714,6 @@ int main(int argc, char* argv[]) {
 				drawImg(buffer[i].x, buffer[i].y, buffer[i].w, buffer[i].h, buffer[i].text, buffer[i].tile, buffer[i].ssh);
 			}
 
-			int pssr = 1;
 			drawImg(width/2-96, height/2-96, 192, 192, playerID, state, (float)(32*pssr));
 
 			for (int i=0; i<buffer2.size(); i++) {
@@ -607,10 +721,24 @@ int main(int argc, char* argv[]) {
 			}
 
 			if (level == 0) {
-				write(16, height-128, 49, "WASD for movements", fontID, 320.0f);
-				write(16, height-64, 49, "E for using, ESC to open menu", fontID, 320.0f);
+				write(16, height-128, 49, "WASD for movements", fontID, 320.0f, 1.0f, 1.0f, 1.0f);
+				write(16, height-64, 49, "E for using, ESC to open menu", fontID, 320.0f, 1.0f, 1.0f, 1.0f);
 			}
-		
+
+			float tme = 120.0f - (glfwGetTime() - elapsed);
+			if (tme > 0) {
+				char timer[4];
+				snprintf(timer, 4, "%03d", (int)tme);
+				if (tme > 10) {
+					write(width/2-80, 16, 4, (const char*)timer, fontID, 320.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+				} else {
+					write(width/2-80, 16, 4, (const char*)timer, fontID, 320.0f, 1.0f, 0.0f, 0.0f, 1.0f);
+				}
+			} else {
+				dead = true;
+				elapsed = glfwGetTime();
+			}
+
 			if (paused) {
 				overlay(0.0f, 0.0f, (float)width, (float)height);
 			
