@@ -1,3 +1,8 @@
+# HOW TO RUN GAME
+**Windows:** Run AlmostThere.exe
+**Linux:** Run AlmostThere.linex
+**FreeBSD:** Run AlmostThere.fbex
+
 # DEPENDENCIES REQUIRED FOR RUNNING ALMOST THERE:
 **Windows:** Nothing, everything is bundled into the folder
 **Linux:** OpenGL, OpenAL, GLFW
@@ -7,5 +12,5 @@ Debian / Ubuntu / Linux Mint: sudo apt install mesa-utils libglfw3-dev libopenal
 RHEL / Fedora: sudo dnf install mesa-libGL glfw openal-soft
 **FreeBSD:** OpenGL, OpenAL, GLFW
 pkg install mesa-libs glfw openal-soft
-**OpenBSD:** OpenGL, OpenAL, GLFW
+**OpenBSD:** OpenAL, GLFW
 doas pkg\_add glfw openal
