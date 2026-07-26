@@ -2,6 +2,7 @@
 **Windows:** Run AlmostThere.exe
 **Linux:** Run AlmostThere.linex
 **FreeBSD:** Run AlmostThere.fbex
+**OpenBSD:** Run AlmostThere.obex
 
 # DEPENDENCIES REQUIRED FOR RUNNING ALMOST THERE:
 **Windows:** Nothing, everything is bundled into the folder
