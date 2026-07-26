@@ -313,10 +313,18 @@ void rect(float x, float y, float w, float h) {
 }
 
 int main(int argc, char* argv[]) {
-	glfwInit();
+	if (!glfwInit()) {
+		printf("GLFWINIT FAILED");
+		return 1;
+	}
+	
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
 	GLFWwindow* screen = glfwCreateWindow(800, 600, "Almost There", NULL, NULL);
+	if (!screen) {
+		printf("GLFW CREATE WINDOW FAILED");
+		return 1;
+	}
 	glfwMakeContextCurrent(screen);
 	gladLoadGL();
 
